@@ -176,5 +176,39 @@
                 }
             ]
         }
+    ],
+    "anwsers": [
+        {
+            "questionId": 1,
+            "anwserId": [1]
+        },
+        {
+            "questionId": 2,
+            "anwserId": [2]
+        },
+        {
+            "questionId": 3,
+            "anwserId": [3]
+        },
+        {
+            "questionId": 4,
+            "anwserId": [1,2]
+        },
+        {
+            "questionId": 5,
+            "anwserId": [4]
+        },
+        {
+            "questionId": 6,
+            "anwserId": [1]
+        },
+        {
+            "questionId": 7,
+            "anwserId": [3]
+        },
+        {
+            "questionId": 8,
+            "anwserId": [2]
+        }
     ]
 }

@@ -9,6 +9,8 @@ const app = {
   questions: [],
   index: 0,
   timer: TIMER_INTERVAL,
+  current: [],
+  score: 0,
   render: function () {
     if (!this.gameStatus) {
       root.innerHTML = `<div class="quiz-box d-flex align-items-center justify-content-center">
@@ -25,6 +27,7 @@ const app = {
         } 
     </div>`;
     } else {
+      this.current = []; //Reset câu trả lời
       this.questions.length = 4;
       if (this.index < this.questions.length) {
         const question = this.questions[this.index];
@@ -44,7 +47,7 @@ const app = {
         }</span>
                   </div>
                   <div class="col-6 text-end">
-                    <span class="btn btn-info">Score: 0</span>
+                    <span class="btn btn-info">Score: ${this.score}</span>
                   </div>
                 </div>
               </div>
@@ -54,14 +57,14 @@ const app = {
                   ${question.answers
                     .map(
                       ({ id, name }) => `<div class="col-3">
-                      <button class="btn btn-primary" data-id="${id}">${name}</button>
+                      <button class="btn btn-primary btn-anwser" data-question-id="${question.id}" data-anwser-id="${id}">${name}</button>
                     </div>`,
                     )
                     .join("")}
                   
                 </div>
               </div>
-              <div class="result anwser-incorrect"></div>
+              <div class="result"></div>
             </div>
           </div>
         </div>`;
@@ -127,27 +130,70 @@ const app = {
         this.render();
       }, 1000);
     });
+    root.addEventListener("click", (e) => {
+      if (e.target.classList.contains("btn-anwser")) {
+        e.target.classList.add("disabled");
+        const questionId = e.target.dataset.questionId;
+        const anwserId = e.target.dataset.anwserId;
+        this.pushCurrent(anwserId);
+        this.checkAnwser(questionId, this.timer);
+      }
+    });
+  },
+  pushCurrent: function (anwserId) {
+    const check = this.current.includes(+anwserId);
+    if (!check) {
+      this.current.push(+anwserId);
+    }
   },
   handleTimer: function () {
     console.log("timer");
     const progressBar = root.querySelector(".progress .progress-bar");
-    const timerInterval = setInterval(() => {
+    this.timerInterval = setInterval(() => {
       this.timer--;
       if (this.timer === 0) {
-        clearInterval(timerInterval);
-        this.index++;
-        this.timer = TIMER_INTERVAL;
-        this.render();
+        this.nextQuestion();
       }
       const rate = (this.timer * 100) / TIMER_INTERVAL;
       progressBar.style.width = `${rate}%`;
       progressBar.style.transition = "none";
     }, 0);
   },
-  getQuestions: async function (index) {
+  nextQuestion: function () {
+    clearInterval(this.timerInterval);
+    setTimeout(() => {
+      this.index++;
+      this.timer = TIMER_INTERVAL;
+      this.resultEl.classList.remove("anwser-correct", "anwser-incorrect");
+      this.render();
+    }, 1000);
+  },
+  getQuestions: async function () {
     const { data } = await client.get("/questions");
     const results = shuffle(data);
     this.questions = results;
+  },
+  checkAnwser: async function (questionId, remain) {
+    const { data } = await client.get("/anwsers?questionId=" + questionId);
+    if (data.length) {
+      const anwserId = data[0].anwserId;
+      if (anwserId.length === this.current.length) {
+        this.resultEl = document.querySelector(".result");
+        if (
+          JSON.stringify(anwserId.sort((a, b) => a - b)) ===
+          JSON.stringify(this.current.sort((a, b) => a - b))
+        ) {
+          this.resultEl.classList.add("anwser-correct");
+          this.getScore(remain);
+        } else {
+          this.resultEl.classList.add("anwser-incorrect");
+        }
+        this.nextQuestion();
+      }
+    }
+  },
+  getScore: function (remain) {
+    this.score += remain;
   },
   start: function () {
     this.render();
