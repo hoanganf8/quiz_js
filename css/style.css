@@ -1,0 +1,14 @@
+.quiz-box {
+  height: 100vh;
+}
+
+.result {
+  height: 40px;
+}
+.anwser-correct {
+  background: green;
+}
+
+.anwser-incorrect {
+  background: red;
+}
